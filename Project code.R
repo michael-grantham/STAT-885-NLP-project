@@ -1,6 +1,7 @@
 library(tidytext)
 library(tidyverse)
 library(quanteda)
+library()
 
 train<-read.csv("train.csv")
 test<-read.csv("test.csv")
@@ -14,9 +15,6 @@ unigram<-txt %>%
   count(word, sort = TRUE)
 
 unnest_tokens(tbl=txt, output=word,input=txt)
-
-class(txt)
-head(txt, 3)
 
 bigram<-txt %>% 
   unnest_tokens(word, txt, token = "ngrams", n = 2) %>% 
@@ -91,9 +89,18 @@ nrow(tweet_train) == length(tweet_train_target)
 ## [1] TRUE
 nrow(tweet_test) == length(tweet_test_target)
 
+#set parallel backend
+library(parallel)
+library(parallelMap) 
+parallelStartSocket(cpus = detectCores())
+
 pc <- prcomp(tweet_train,
              center = TRUE,
              scale. = F)
+
+plot(summary(pc)$importance[3,], xlab="PCs", ylab="% Var Explained", type="l")
+
+summary(pc)$importance[3,1000]
 
 trg <- predict(pc, tweet_train)
 
@@ -101,4 +108,27 @@ trg <- predict(pc, tweet_train)
 
 trg <- data.frame(trg, tweet_train_target)
 tst <- predict(pc, tweet_test)
-tst <- data.frame(tst, tweet_train_target)
+tst <- data.frame(tst, tweet_test_target)
+
+
+#logistic regression
+library(glmnet)
+
+fitLR <- cv.glmnet(tst[,-ncol(tst)], tst[,ncol(tst)], family = 'binomial')
+summary(fitLR)
+
+predLR <- predict(fitLR, tst[,-ncol(tst)], type = 'class')
+
+head(predLR)
+dim(predLR)
+
+table(predLR,  tst[,ncol(tst)) 
+
+mean( predLR  != tst[,ncol(tst)) 
+
+accuracyLR <- 1- mean( predict(fitLR, data.matrix(tst[,-ncol(tst)), 
+                               type = 'class') != tst[,ncol(tst)) 
+
+accuracyLR
+
+

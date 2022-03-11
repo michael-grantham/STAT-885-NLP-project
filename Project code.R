@@ -122,12 +122,12 @@ predLR <- predict(fitLR, tst[,-ncol(tst)], type = 'class')
 head(predLR)
 dim(predLR)
 
-table(predLR,  tst[,ncol(tst)) 
+table(predLR,  tst[,ncol(tst)]) 
 
-mean( predLR  != tst[,ncol(tst)) 
+mean( predLR  != tst[,ncol(tst)]) 
 
-accuracyLR <- 1- mean( predict(fitLR, data.matrix(tst[,-ncol(tst)), 
-                               type = 'class') != tst[,ncol(tst)) 
+accuracyLR <- 1- mean( predict(fitLR, data.matrix(tst[,-ncol(tst)]), 
+                               type = 'class') != tst[,ncol(tst)]) 
 
 accuracyLR
 

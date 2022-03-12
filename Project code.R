@@ -1,7 +1,6 @@
 library(tidytext)
 library(tidyverse)
 library(quanteda)
-library()
 
 train<-read.csv("train.csv")
 test<-read.csv("test.csv")
@@ -71,7 +70,7 @@ dim(tweet_dfmat)
 
 # split training set into training and test set
 set.seed(123)
-prop_train <- 0.2
+prop_train <- .2
 train_ids <- sample(1:nrow(train), size = round(prop_train * nrow(train)),
                     replace = FALSE)
 test_ids <- (index_train[1]:index_train[2])[-train_ids]
@@ -102,33 +101,55 @@ plot(summary(pc)$importance[3,], xlab="PCs", ylab="% Var Explained", type="l")
 
 summary(pc)$importance[3,1000]
 
-trg <- predict(pc, tweet_train)
-
-#Add the target column information into trg.
-
-trg <- data.frame(trg, tweet_train_target)
-tst <- predict(pc, tweet_test)
-tst <- data.frame(tst, tweet_test_target)
-
-
+trg <-tweet_train %*% pc$rotation[,1:1000]
+tst <-tweet_test %*% pc$rotation[,1:1000]
+"
 #logistic regression
 library(glmnet)
 
-fitLR <- cv.glmnet(tst[,-ncol(tst)], tst[,ncol(tst)], family = 'binomial')
+#cv.glmnet requires inputs to be data-matrices
+tst<-data.matrix(tst)
+tweet_test_target <-data.matrix(tweet_test_target)
+
+fitLR <- cv.glmnet(tst, tweet_test_target, family = 'binomial')
 summary(fitLR)
 
-predLR <- predict(fitLR, tst[,-ncol(tst)], type = 'class')
+predLR <- predict(fitLR, tst, type = 'class')
 
 head(predLR)
-dim(predLR)
 
-table(predLR,  tst[,ncol(tst)]) 
+LRtable <- table(predLR,  tweet_test_target) 
 
-mean( predLR  != tst[,ncol(tst)]) 
-
-accuracyLR <- 1- mean( predict(fitLR, data.matrix(tst[,-ncol(tst)]), 
-                               type = 'class') != tst[,ncol(tst)]) 
-
+accuracyLR <- 1- mean( predLR  != tweet_test_target) 
 accuracyLR
 
+recallLR = LRtable[2,2]/sum(LRtable[2,2], LRtable[1,2])
+recallLR
 
+precisionLR = LRtable[2,2]/sum(LRtable[2,2], LRtable[2,1])
+precisionLR
+
+specificityLR = LRtable[1,1]/sum(LRtable[1,1], LRtable[2,1])
+specificityLR
+"
+#Trying Random Forest
+#library(randomForest)
+
+#fitRF = randomForest(tst, tweet_test_target, 
+#                       importance=TRUE)
+  
+#predrftest = predict(fitRF, tst)
+#rftable = table(predrftest, tweet_test_target)
+
+#Trying Classification Tree
+library(rpart)
+tst<-as.data.frame(tst)
+tweet_test_target <-as.data.frame(tweet_test_target)
+class(tst)
+class(tweet_test_target)
+fitCT <- rpart(tweet_test_target~., 
+             data = data.frame(tst, tweet_test_target), 
+                               method = 'class')
+predCTtest = predict(fitCT, tst)
+CTtable = table(predCTtest, tweet_test_target)
+CTtable

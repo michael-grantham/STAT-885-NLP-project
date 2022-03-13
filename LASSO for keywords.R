@@ -1,3 +1,4 @@
+library(glmnet)
 #Trying LASSO to get keywords
 #perform k-fold cross-validation to find optimal lambda value
 tweet_train = data.matrix(tweet_train)
@@ -15,23 +16,10 @@ plot(cv_model)
 best_model = glmnet(tweet_train, tweet_train_target, alpha = 1, lambda = best_lambda)
 lasso.coef = coef(best_model)[-1,]
 
-indices = list()
 lasso.coef = as.data.frame(as.matrix(lasso.coef))
-
-for(i in 1:nrow(lasso.coef)){
-  if(lasso.coef[i,1]!=0){
-    len <- length(indices)
-    indices[[len+1]] <- i
-  }
-}
-
-keyword_indices = as.integer(indices)
-keywords = rownames(lasso.coef)[keyword_indices]
+indices = which(!lasso.coef == 0)
+keywords = rownames(lasso.coef)[indices]
 keywords
 
 tweet_designmatrix_keywords_only = tweet_dfmat[,keywords]
 tweet_designmatrix_keywords_only
-tweet_dfmat
-
-dim(tweet_designmatrix_keywords_only)
-dim(tweet_dfmat)
